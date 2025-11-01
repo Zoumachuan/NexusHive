@@ -16,6 +16,7 @@ class Hms
         // 获取hms.json文件内容
         // 注意：这里需要根据实际项目结构调整文件路径
         $jsonPath = '/hms.json'; // 假设hms.json位于项目根目录
+        $jsonPath = app()->getRootPath() . '/public' . '/hms.json';
         
         // 如果找不到hms.json，尝试从URL获取（如果需要）
         if (!file_exists($jsonPath)) {

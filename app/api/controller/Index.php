@@ -12,6 +12,7 @@ use app\common\library\token\TokenExpirationException;
 use ba\Alists;
 use dji\Log;
 use think\facade\Cache;
+use think\facade\Log as FacadeLog;
 
 class Index extends Frontend
 {
@@ -206,5 +207,12 @@ class Index extends Frontend
             'total_flight_sorties' => $total_flight_sorties,
             'total_airline' => $total_airline,
         ]);
+    }
+
+     public function test(){
+       
+        $param = $this->request->all();
+        FacadeLog::info("你好");
+        $this->success('返回成功！',$param);
     }
 }

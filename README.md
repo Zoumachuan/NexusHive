@@ -5,6 +5,10 @@
 [![Mars3D](https://img.shields.io/badge/Visualization-Mars3D-orange.svg)](https://mars3d.cn/)
 [![DJI SDK](https://img.shields.io/badge/DJI-Cloud%20API-v2--v3-success.svg)](https://developer.dji.com/)
 
+![输入图片说明](image.png)
+![输入图片说明](tx.png)
+![输入图片说明](jg.png)
+![输入图片说明](kj.png)
 ## 概述
 
 一款基于 **大疆上云API (DJI Cloud API)** 开发的工业级低空无人机智能调度与管理平台。后端采用 **BuildAdmin** 框架，提供稳定高效的API服务；前端三维可视化基于 **Mars3D** 引擎，呈现炫酷真实的作业场景。实现了对无人机机队的集中化、自动化、可视化管控，赋能能源巡检、工程测绘、安防监控等低空作业场景。
@@ -52,34 +56,28 @@
         Workerman 3.5.34
         EMQX 4.4
  ***前端***： 
- 
         Node
             node.js > 20.19.0
             node.js: 22.x (推荐)
-            
         核心框架
             Vue: 3.5.13 (Vue 3 组合式API)
             TypeScript: 5.7.2
             Vite: 6.3.5 (构建工具)
             Vue Router: 4.5.0 (路由管理)
             Pinia: 2.3.0 (状态管理)
-            
         UI组件库
             Element Plus: 2.9.1 (主要UI组件库)
             Element Plus Icons: 2.3.1 (图标库)
             Font Awesome: 4.7.0 (图标字体)
-            
         地图与3D渲染
             Mars3D: 3.10.0 (三维地球平台)
             Mars3D Cesium: 1.131.1 (Cesium引擎)
             Mars3D Space: 3.10.0 (空间分析)
             @turf/turf: 7.2.0 (地理空间分析)
-            
         通信与实时功能
             MQTT: 5.13.3 (消息队列)
             Agora RTC SDK: 4.23.4 (实时音视频)
             Axios: 1.9.0 (HTTP客户端)
-            
  ***宝塔部署***： 
         
         宝塔新建站点，设置站点目录为public

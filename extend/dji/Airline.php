@@ -12,7 +12,12 @@ use think\facade\Db;
 
 class Airline
 {
-    public $endpoint = '';
+    private $endpoint;
+
+    public function __construct()
+    {
+        $this->endpoint = rtrim(env('oss.cdn_base', 'https://djiapis.oss-cn-chengdu.aliyuncs.com'), '/');
+    }
     /**
      * 航线任务下发接口 - 根据DJI官方API优化
      * @param array $param 任务参数
@@ -145,13 +150,13 @@ class Airline
         $taskData['wayline_precision_type'] = isset($param['wayline_precision_type']) ? (int)$param['wayline_precision_type'] : 1;
 
         // 模拟任务设置
-        // if (isset($param['simulate_mission']) && $param['simulate_mission']) {
+        if (isset($param['simulate_mission']) && $param['simulate_mission']) {
             $taskData['simulate_mission'] = [
                 'is_enable' => 1,
                 'latitude' => isset($param['simulate_latitude']) ? (float)$param['simulate_latitude'] : 30.46822907,
                 'longitude' => isset($param['simulate_longitude']) ? (float)$param['simulate_longitude'] : 105.562635819
             ];
-        // }
+        }
 
         // 就绪条件(条件任务)
         if ($param['task_type'] == 2 && isset($param['ready_conditions'])) {
@@ -476,8 +481,8 @@ class Airline
 
     public function storageConfigReady($param)
     {
-        echo 'bucket is djicloudapis';
-        $alists = new Alists('djicloudapis');
+        echo 'bucket is ' . env('oss.bucket', 'djicloudapis');
+        $alists = new Alists(env('oss.bucket', 'djicloudapis'));
         $sts = $alists->sts();
         $data = [];
         $data['topic'] = 'thing/product/' . $param['sn'] . '/requests_reply';
@@ -489,14 +494,40 @@ class Airline
             'output' => [],
             'result' => 0
         ];
-        $data['data']['output']['bucket'] = 'djicloudapis';
+        $data['data']['output']['bucket'] = env('oss.bucket', 'djicloudapis');
         $data['data']['output']['credentials'] = $sts;
-        $data['data']['output']['endpoint'] = 'https://oss-cn-chengdu.aliyuncs.com';
+        $data['data']['output']['endpoint'] = env('oss.endpoint', 'https://oss-cn-chengdu.aliyuncs.com');
         $data['data']['output']['object_key_prefix'] = $param['sn'];
         $data['data']['output']['provider'] = 'ali';
         $data['data']['output']['region'] = 'cd';
         publish($data);
     }
+
+    // public function storageConfigReady($param)
+    // {
+    //     // $alists = new Alists('djiapi');
+    //     // $sts = $alists->sts();
+    //     $data = [];
+    //     $data['topic'] = 'thing/product/' . $param['sn'] . '/requests_reply';
+    //     $data['bid'] = $param['bid'];
+    //     $data['tid'] = $param['tid'];
+    //     $data['timestamp'] = round(microtime(true) * 1000);
+    //     $data['method'] = 'storage_config_get';
+    //     $data['data'] = [
+    //         'output' => [],
+    //         'result' => 0
+    //     ];
+    //     $data['data']['output']['bucket'] = 'djiapi';
+    //     $data['data']['output']['credentials'] = [];
+    //     $data['data']['output']['credentials']['access_key_id'] = 'hPPB3l7LNKmgNlPq5vKM';
+    //     $data['data']['output']['credentials']['access_key_secret'] = 'vxGvXudIYAVKSdYWBNjxTfL34vFz3yH2U8CZ9KL5';
+    //     $data['data']['output']['credentials']['expire'] = 3600;
+    //     $data['data']['output']['endpoint'] = 'http://minio.chuangxing.ren';
+    //     $data['data']['output']['object_key_prefix'] = $param['sn'];
+    //     $data['data']['output']['provider'] = 'minio';
+    //     $data['data']['output']['region'] = 'cn-chengdu';
+    //     publish($data);
+    // }
 
     /**
      * 文件上传回调处理函数 - 将上传文件信息入库

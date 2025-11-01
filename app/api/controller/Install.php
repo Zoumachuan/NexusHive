@@ -230,6 +230,32 @@ class Install extends Api
         }
         // proc_open-end
 
+        // proc_open
+        $phpExec = function_exists('exec');
+        if (!$phpExec) {
+            $phpExecLink = [
+                [
+                    'name'  => __('View reason'),
+                    'title' => __('proc_open or proc_close functions in PHP Ini is disabled'),
+                    'type'  => 'faq',
+                    'url'   => 'https://doc.buildadmin.com/guide/install/disablement.html'
+                ],
+                [
+                    'name'  => __('How to modify'),
+                    'title' => __('Click to view how to modify'),
+                    'type'  => 'faq',
+                    'url'   => 'https://doc.buildadmin.com/guide/install/disablement.html'
+                ],
+                [
+                    'name'  => __('Security assurance?'),
+                    'title' => __('Using the installation service correctly will not cause any potential security problems. Click to view the details'),
+                    'type'  => 'faq',
+                    'url'   => 'https://doc.buildadmin.com/guide/install/senior.html'
+                ],
+            ];
+        }
+        // proc_open-end
+
         $this->success('', [
             'php_version'        => [
                 'describe' => $phpVersion,
@@ -260,6 +286,11 @@ class Install extends Api
                 'describe' => $phpProc ? __('Allow execution') : __('disabled'),
                 'state'    => $phpProc ? self::$ok : self::$warn,
                 'link'     => $phpProcLink ?? []
+            ],
+            'php_exec'           => [
+                'describe' => $phpExec ? __('Allow execution') : __('disabled'),
+                'state'    => $phpExec ? self::$ok : self::$warn,
+                'link'     => $phpExecLink ?? []
             ],
         ]);
     }
@@ -470,6 +501,33 @@ class Install extends Api
             $envFileContent .= 'PREFIX = ' . $databaseParam['prefix'] . "\n";
             $envFileContent .= 'CHARSET = utf8mb4' . "\n";
             $envFileContent .= 'DEBUG = true' . "\n";
+
+            // OSS 配置
+            if (stripos($envFileContent, "[OSS]") === false) {
+                $envFileContent .= "\n" . '[OSS]' . "\n";
+                $envFileContent .= 'CDN_BASE = ' . "\n";
+                $envFileContent .= 'BUCKET = ' . "\n";
+                $envFileContent .= 'ENDPOINT = ' . "\n";
+            }
+
+            // OSS 配置
+            if (stripos($envFileContent, "[OSS]") === false) {
+                $envFileContent .= "\n" . '[OSS]' . "\n";
+                $envFileContent .= 'CDN_BASE = ' . "\n";
+                $envFileContent .= 'BUCKET = ' . "\n";
+                $envFileContent .= 'ENDPOINT = ' . "\n";
+            }
+            // ALI STS 配置
+            if (stripos($envFileContent, "[ALISTS]") === false) {
+                $envFileContent .= "\n" . '[ALISTS]' . "\n";
+                $envFileContent .= 'URL = ' . "\n";
+                $envFileContent .= 'ACCESS_KEY_ID = ' . "\n";
+                $envFileContent .= 'ACCESS_KEY_SECRET = ' . "\n";
+                $envFileContent .= 'ROLE_ARN = ' . "\n";
+                $envFileContent .= 'ROLE_SESSION_NAME = ' . "\n";
+                $envFileContent .= 'DURATION_SECONDS = ' . "\n";
+            }
+
             $result         = @file_put_contents($envFile, $envFileContent);
             if (!$result) {
                 $this->error(__('File has no write permission:%s', ['/' . $envFile]));
@@ -647,5 +705,127 @@ class Install extends Api
             'databases' => $databases,
             'pdo'       => $returnPdo ? $connect->getPdo() : '',
         ];
+    }
+
+    /**
+     * 导入 SQL 初始化数据（默认路径 deploy/docker/db-init/fly.sql）
+     */
+    public function importSql(): void
+    {
+        if ($this->isInstallComplete()) {
+            $this->error(__('The system has completed installation. If you need to reinstall, please delete the %s file first', ['public/' . self::$lockFileName]));
+        }
+
+        $defaultPath = root_path() . 'deploy' . DIRECTORY_SEPARATOR . 'docker' . DIRECTORY_SEPARATOR . 'db-init' . DIRECTORY_SEPARATOR . 'fly.sql';
+        $path        = $this->request->post('path', $defaultPath);
+        if (!is_file($path)) {
+            $this->error(__('SQL file does not exist:%s', [$path]));
+        }
+
+        // 优先使用已写入的数据库配置，否则回退到请求参数
+        $conf     = Config::get('database')['connections']['mysql'] ?? [];
+        $database = [
+            'hostname' => $conf['hostname'] ?? $this->request->post('hostname'),
+            'username' => $conf['username'] ?? $this->request->post('username'),
+            'password' => $conf['password'] ?? $this->request->post('password'),
+            'hostport' => $conf['hostport'] ?? $this->request->post('hostport'),
+            'database' => $conf['database'] ?? $this->request->post('database'),
+        ];
+
+        $conn = $this->connectDb($database, true);
+        if ($conn['code'] == 0 || empty($conn['pdo'])) {
+            $this->error($conn['msg'] ?: __('Database connection failed:%s', ['unknown']));
+        }
+        $pdo = $conn['pdo'];
+
+        $sql = @file_get_contents($path);
+        if ($sql === false) {
+            $this->error(__('Failed to read SQL file:%s', [$path]));
+        }
+
+        try {
+            // 统一字符集 & 兼容旧版 InnoDB 索引限制
+            $pdo->exec("SET NAMES utf8mb4;");
+            $pdo->exec("SET SESSION innodb_strict_mode=0;");
+            $pdo->exec('SET FOREIGN_KEY_CHECKS=0;');
+            foreach (self::splitSqlStatements($sql) as $stmt) {
+                $stmt = trim($stmt);
+                if ($stmt !== '') {
+                    // 针对 MySQL 5.6/5.7 在 InnoDB 索引长度/行格式上的兼容处理
+                    if (preg_match('/^\s*CREATE\s+TABLE/i', $stmt)) {
+                        if (stripos($stmt, 'ROW_FORMAT') === false) { $stmt .= ' ROW_FORMAT=DYNAMIC'; }
+                        if (stripos($stmt, 'ENGINE=') === false) { $stmt .= ' ENGINE=InnoDB'; }
+                        if (stripos($stmt, 'CHARSET=') === false && stripos($stmt, 'CHARACTER SET') === false) { $stmt .= ' DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'; }
+                    }
+                    try {
+                        $pdo->exec($stmt);
+                    } catch (PDOException $e) {
+                        $this->error(__('SQL execution failed:%s | Statement:%s', [
+                            mb_convert_encoding($e->getMessage() ?: 'unknown', 'UTF-8', 'UTF-8,GBK,GB2312,BIG5'),
+                            mb_substr($stmt, 0, 200)
+                        ]));
+                    }
+                }
+            }
+            $pdo->exec('SET FOREIGN_KEY_CHECKS=1;');
+        } catch (PDOException $e) {
+            $this->error(__('SQL execution failed:%s', [mb_convert_encoding($e->getMessage() ?: 'unknown', 'UTF-8', 'UTF-8,GBK,GB2312,BIG5')]));
+        }
+
+        $this->success(__('Import completed'));
+    }
+
+    /**
+     * 简单 SQL 语句切分器：按分号分隔，忽略引号与注释中的分号
+     */
+    private static function splitSqlStatements(string $sql): array
+    {
+        $statements      = [];
+        $current         = '';
+        $inSingle        = false;
+        $inDouble        = false;
+        $inLineComment   = false; // -- 或 #
+        $inBlockComment  = false; // /* */
+        $len             = strlen($sql);
+        for ($i = 0; $i < $len; $i++) {
+            $ch  = $sql[$i];
+            $nxt = $i + 1 < $len ? $sql[$i + 1] : '';
+
+            if ($inLineComment) {
+                if ($ch === "\n") { $inLineComment = false; $current .= $ch; }
+                continue;
+            }
+            if ($inBlockComment) {
+                if ($ch === '*' && $nxt === '/') { $inBlockComment = false; $i++; }
+                continue;
+            }
+
+            if (!$inSingle && !$inDouble) {
+                if ($ch === '-' && $nxt === '-') { $inLineComment = true; $i++; continue; }
+                if ($ch === '#') { $inLineComment = true; continue; }
+                if ($ch === '/' && $nxt === '*') { $inBlockComment = true; $i++; continue; }
+            }
+
+            if ($ch === "'" && !$inDouble) {
+                $inSingle = !$inSingle;
+                $current .= $ch;
+                continue;
+            }
+            if ($ch === '"' && !$inSingle) {
+                $inDouble = !$inDouble;
+                $current .= $ch;
+                continue;
+            }
+
+            if ($ch === ';' && !$inSingle && !$inDouble) {
+                $statements[] = $current;
+                $current      = '';
+                continue;
+            }
+
+            $current .= $ch;
+        }
+        if (trim($current) !== '') { $statements[] = $current; }
+        return $statements;
     }
 }

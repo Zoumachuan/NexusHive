@@ -87,7 +87,7 @@ class Airline extends Backend
             $this->model->startTrans();
             try {
                 // 模型验证
-                $endpoint = 'https://djiapis.oss-cn-chengdu.aliyuncs.com';
+                $endpoint = rtrim(env('oss.cdn_base', 'https://djiapis.oss-cn-chengdu.aliyuncs.com'), '/');
                 if ($this->modelValidate) {
                     $validate = str_replace("\\model\\", "\\validate\\", get_class($this->model));
                     if (class_exists($validate)) {
@@ -188,7 +188,7 @@ class Airline extends Backend
     public function edit(): void
     {
         
-        $endpoint = 'https://djiapis.oss-cn-chengdu.aliyuncs.com';
+        $endpoint = rtrim(env('oss.cdn_base', 'https://djiapis.oss-cn-chengdu.aliyuncs.com'), '/');
         $pk  = $this->model->getPk();
         $id  = $this->request->param($pk);
         $row = $this->model->find($id);
