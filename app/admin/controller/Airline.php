@@ -98,10 +98,8 @@ class Airline extends Backend
                 }
                 if (isset($data['template']) && isset($data['wayline'])) {
                      // 新增KMZ打包逻辑
-                    // $templatePath = app()->getRootPath() . '/public' . $data['template'];
-                    // $waylinePath = app()->getRootPath() . '/public' . $data['wayline'];
-                    $templatePath = $endpoint . $data['template'];
-                    $waylinePath = $endpoint . $data['wayline'];
+                    $templatePath = app()->getRootPath() . '/public' . $data['template'];
+                    $waylinePath = app()->getRootPath() . '/public' . $data['wayline'];
                     // 创建临时目录和wpmz子文件夹
                     $tempDir = app()->getRuntimePath() . 'temp/' . md5(time());
                     $wpmzDir = $tempDir . '/wpmz';
@@ -169,6 +167,7 @@ class Airline extends Backend
                 $this->model->commit();
             } catch (Throwable $e) {
                 $this->model->rollback();
+                echo '123';
                 $this->error($e->getMessage());
             }
             if ($result !== false) {
@@ -230,10 +229,8 @@ class Airline extends Backend
 
                 // 新增KMZ打包逻辑（仅在template或wayline变更时执行）
                 if (isset($data['template']) || isset($data['wayline'])) {
-                    $templatePath = $endpoint . $data['template'];
-                    $waylinePath = $endpoint . $data['wayline'];
-                    $templatePath = $endpoint . ($data['template'] ?? $row['template']);
-                    $waylinePath = $endpoint . ($data['wayline'] ?? $row['wayline']);
+                    $templatePath = app()->getRootPath() . '/public' . $data['template'];
+                    $waylinePath = app()->getRootPath() . '/public' . $data['wayline'];
                     
                     // 创建临时目录和wpmz子文件夹
                     $tempDir = app()->getRuntimePath() . 'temp/' . md5(time());
