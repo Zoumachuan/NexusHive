@@ -50,7 +50,7 @@ class Mqtt extends Server
             'username' => "wangxudong",
             "password" => "Admin@1234567890"
         ];
-        $mqtt = new \Workerman\Mqtt\Client('mqtt://121.5.46.95:1883', $options); // mqtt://mqt.test.com:1883 这个域名请填写自己Broker的 域名
+        $mqtt = new \Workerman\Mqtt\Client('', $options); // mqtt://mqt.test.com:1883 这个域名请填写自己Broker的 域名
         //获取设备
         $list = Equipment::select();
         $this->connection = $mqtt;
