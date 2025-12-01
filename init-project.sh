@@ -77,14 +77,19 @@ EOF
 echo -e "${GREEN}✓ 后端配置完成${NC}"
 
 # ===================================
-# 2. 安装后端依赖
+# 安装后端依赖
 # ===================================
 echo -e "${YELLOW}[2/5] 安装后端依赖...${NC}"
 composer install --no-dev --optimize-autoloader
 
+# 创建必要的目录
+mkdir -p /root/NexusHive/NexusHive/runtime
+mkdir -p /root/NexusHive/NexusHive/public/uploads
+
 # 设置权限
 chmod -R 755 /root/NexusHive/NexusHive
 chmod -R 777 /root/NexusHive/NexusHive/runtime
+chmod -R 777 /root/NexusHive/NexusHive/public/uploads
 
 echo -e "${GREEN}✓ 后端依赖安装完成${NC}"
 
@@ -118,7 +123,12 @@ if [ -f "src/api/common.ts" ]; then
     sed -i "s|http://localhost:8000|http://${SERVER_IP}:8000|g" src/api/common.ts
 fi
 
+echo -e "${YELLOW}安装依赖...${NC}"
 pnpm install
+
+echo -e "${YELLOW}开始编译(限制内存使用，可能需要10-15分钟)...${NC}"
+# 限制Node.js内存使用，避免OOM
+export NODE_OPTIONS="--max-old-space-size=1536"
 pnpm build
 
 echo -e "${GREEN}✓ 前端编译完成${NC}"
