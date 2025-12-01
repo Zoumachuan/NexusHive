@@ -25,14 +25,15 @@ fi
 
 echo -e "${YELLOW}找到备份: ${BACKUP_FILE}${NC}"
 
-# 读取MySQL密码
-if [ ! -f "/root/nexushive-config.txt" ]; then
-    echo -e "${RED}错误: 未找到配置文件${NC}"
-    echo "请先运行 deploy-to-new-server.sh"
+# 获取MySQL密码
+echo -e "${YELLOW}请输入MySQL root密码(甲方已安装):${NC}"
+read -s MYSQL_PASSWORD
+echo ""
+
+if [ -z "$MYSQL_PASSWORD" ]; then
+    echo -e "${RED}错误: 密码不能为空${NC}"
     exit 1
 fi
-
-MYSQL_PASSWORD=$(grep "MySQL密码:" /root/nexushive-config.txt | awk '{print $2}')
 
 echo -e "${YELLOW}[1/6] 解压备份文件...${NC}"
 cd /root
@@ -64,7 +65,7 @@ DEBUG = false
 [REDIS]
 HOST = 127.0.0.1
 PORT = 6379
-PASSWORD = 
+PASSWORD = nexushive_redis_2025
 SELECT = 0
 
 [MQTT]
@@ -84,11 +85,18 @@ chmod -R 755 /www/nexushive/backend
 chmod -R 777 /www/nexushive/backend/runtime
 
 echo -e "${YELLOW}[4/6] 恢复数据库...${NC}"
-# 等待MySQL完全启动
-sleep 5
+# 导入到甲方已安装的MySQL
+mysql -uroot -p${MYSQL_PASSWORD} nexushive < /root/nexushive-backup/database.sql
 
-# 导入数据库
-docker exec -i nexushive_mysql mysql -uroot -p${MYSQL_PASSWORD} nexushive < /root/nexushive-backup/database.sql
+if [ $? -ne 0 ]; then
+    echo -e "${RED}数据库导入失败,请检查:${NC}"
+    echo "1. MySQL是否正常运行?"
+    echo "2. nexushive数据库是否已创建?"
+    echo "3. root密码是否正确?"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ 数据库导入成功${NC}"
 
 echo -e "${YELLOW}[5/6] 恢复前端代码...${NC}"
 cd /www/nexushive/frontend
@@ -111,17 +119,14 @@ cd /www/nexushive/frontend
 pnpm install
 pnpm build
 
-# 部署到Nginx
-rm -rf /usr/share/nginx/html/*
-cp -r /www/nexushive/frontend/dist/* /usr/share/nginx/html/
-
-echo -e "${YELLOW}[6/6] 配置Nginx...${NC}"
-cat > /data/nexushive/nginx/default.conf <<EOF
+# 部署到OpenResty
+echo -e "${YELLOW}OpenResty配置文件需要手动创建:${NC}"
+cat > /tmp/nexushive-nginx.conf <<EOF
 server {
     listen 80;
     server_name ${SERVER_IP};
     
-    root /usr/share/nginx/html;
+    root /www/nexushive/frontend/dist;
     index index.html;
 
     # 前端静态文件
@@ -131,7 +136,7 @@ server {
 
     # 后端API代理
     location /api {
-        proxy_pass http://${SERVER_IP}:8000;
+        proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -139,7 +144,7 @@ server {
 
     # MQTT WebSocket代理
     location /mqtt {
-        proxy_pass http://${SERVER_IP}:8083;
+        proxy_pass http://127.0.0.1:8083;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "Upgrade";
@@ -153,8 +158,11 @@ server {
 }
 EOF
 
-# 重启Nginx
-docker restart nexushive_nginx
+echo -e "${GREEN}配置文件已生成: /tmp/nexushive-nginx.conf${NC}"
+echo -e "${YELLOW}请将此配置添加到OpenResty配置目录${NC}"
+echo ""
+
+echo -e "${YELLOW}[6/6] 配置完成提示...${NC}"
 
 echo -e "${YELLOW}[7/7] 启动后端服务...${NC}"
 cd /www/nexushive/backend
@@ -190,8 +198,13 @@ if [ -d "/root/nexushive-backup/uploads" ]; then
 fi
 
 echo -e "${GREEN}================================${NC}"
-echo -e "${GREEN}  迁移完成!${NC}"
+echo -e "${GREEN}  代码部署完成!${NC}"
 echo -e "${GREEN}================================${NC}"
+echo ""
+echo -e "${YELLOW}剩余手动操作:${NC}"
+echo "1. 将 /tmp/nexushive-nginx.conf 添加到OpenResty配置"
+echo "2. 重启OpenResty: systemctl restart openresty"
+echo "3. 检查后端服务: systemctl status nexushive-backend"
 echo ""
 echo -e "${GREEN}访问地址:${NC}"
 echo "前端: http://${SERVER_IP}"
@@ -199,11 +212,10 @@ echo "后端API: http://${SERVER_IP}:8000"
 echo "EMQX管理: http://${SERVER_IP}:18083 (admin/public)"
 echo ""
 echo -e "${GREEN}服务状态:${NC}"
-echo "Docker容器:"
-docker ps
-echo ""
-echo "后端服务:"
-systemctl status nexushive-backend --no-pager
+echo "MySQL: $(systemctl is-active mysql || echo '未检测到systemctl管理')"
+echo "Redis: $(systemctl is-active redis-server)"
+echo "EMQX: $(docker ps --filter name=nexushive_emqx --format '{{.Status}}')"
+echo "后端: $(systemctl is-active nexushive-backend)"
 echo ""
 echo -e "${YELLOW}清理备份文件:${NC}"
 echo "rm -rf /root/nexushive-backup*"

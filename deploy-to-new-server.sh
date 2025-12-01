@@ -68,37 +68,24 @@ echo -e "${YELLOW}[5/10] 创建项目目录...${NC}"
 mkdir -p /data/nexushive/{mysql,redis,emqx,logs,nginx,uploads}
 mkdir -p /www/nexushive/{backend,frontend}
 
-echo -e "${YELLOW}[6/10] 创建Docker Compose配置...${NC}"
+echo -e "${YELLOW}[6/10] 安装Redis 6.2...${NC}"
+if ! command -v redis-server &> /dev/null; then
+    apt-get install -y -qq redis-server
+    # 配置Redis
+    sed -i 's/^bind 127.0.0.1 ::1/bind 0.0.0.0/' /etc/redis/redis.conf
+    sed -i 's/^# requirepass foobared/requirepass nexushive_redis_2025/' /etc/redis/redis.conf
+    systemctl restart redis-server
+    systemctl enable redis-server
+    echo -e "${GREEN}✓ Redis安装完成${NC}"
+else
+    echo -e "${GREEN}✓ Redis已安装,跳过${NC}"
+fi
+
+echo -e "${YELLOW}[7/10] 创建Docker Compose配置(仅EMQX)...${NC}"
 cat > /data/nexushive/docker-compose.yml <<EOF
 version: '3.8'
 
 services:
-  # MySQL数据库
-  mysql:
-    image: mysql:5.7
-    container_name: nexushive_mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DB_NAME}
-      TZ: Asia/Shanghai
-    ports:
-      - "3306:3306"
-    volumes:
-      - /data/nexushive/mysql:/var/lib/mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-
-  # Redis缓存
-  redis:
-    image: redis:6.0-alpine
-    container_name: nexushive_redis
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - /data/nexushive/redis:/data
-    command: redis-server --appendonly yes
-
   # EMQX MQTT服务器
   emqx:
     image: emqx/emqx:latest
@@ -114,37 +101,19 @@ services:
     volumes:
       - /data/nexushive/emqx:/opt/emqx/data
 
-  # Nginx反向代理
-  nginx:
-    image: nginx:alpine
-    container_name: nexushive_nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /www/nexushive/frontend:/usr/share/nginx/html
-      - /data/nexushive/nginx:/etc/nginx/conf.d
-      - /data/nexushive/logs:/var/log/nginx
-    depends_on:
-      - mysql
-      - redis
-      - emqx
-
 networks:
   default:
     name: nexushive_network
 EOF
 
-echo -e "${YELLOW}[7/10] 启动Docker容器...${NC}"
+echo -e "${YELLOW}[8/10] 启动EMQX容器...${NC}"
 cd /data/nexushive
 docker-compose up -d
 
-# 等待MySQL启动
-echo -e "${YELLOW}等待MySQL启动(30秒)...${NC}"
-sleep 30
+echo -e "${YELLOW}等待EMQX启动(10秒)...${NC}"
+sleep 10
 
-echo -e "${YELLOW}[8/10] 安装PHP 8.1和相关扩展...${NC}"
+echo -e "${YELLOW}[9/10] 安装PHP 8.1和相关扩展...${NC}"
 add-apt-repository ppa:ondrej/php -y
 apt-get update -qq
 apt-get install -y -qq \
@@ -158,14 +127,14 @@ sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/' /etc/php/8.1/fpm/php.ini
 systemctl restart php8.1-fpm
 systemctl enable php8.1-fpm
 
-echo -e "${YELLOW}[9/10] 安装Composer...${NC}"
+echo -e "${YELLOW}[10/10] 安装Composer...${NC}"
 if ! command -v composer &> /dev/null; then
     curl -sS https://getcomposer.org/installer | php
     mv composer.phar /usr/local/bin/composer
     chmod +x /usr/local/bin/composer
 fi
 
-echo -e "${YELLOW}[10/10] 安装Node.js 20.x和pnpm...${NC}"
+echo -e "${YELLOW}[11/11] 安装Node.js 20.x和pnpm...${NC}"
 if ! command -v node &> /dev/null; then
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt-get install -y nodejs
@@ -182,20 +151,25 @@ echo -e "${YELLOW}MySQL密码: ${MYSQL_ROOT_PASSWORD}${NC}"
 echo -e "${YELLOW}请保存到安全的地方!${NC}"
 echo ""
 echo -e "${GREEN}下一步操作:${NC}"
-echo "1. 在旧服务器执行: bash /root/NexusHive/export-project.sh"
-echo "2. 将生成的 nexushive-backup.tar.gz 上传到新服务器"
-echo "3. 在新服务器执行: bash /root/NexusHive/import-project.sh"
+echo "1. 确认MySQL数据库已创建: nexushive"
+echo "2. 在旧服务器执行: bash export-project.sh"
+echo "3. 将生成的 nexushive-backup.tar.gz 上传到新服务器"
+echo "4. 在新服务器执行: bash import-project.sh"
 echo ""
-echo -e "${YELLOW}容器状态:${NC}"
-docker-compose ps
+echo -e "${YELLOW}服务状态:${NC}"
+echo "Redis: $(systemctl is-active redis-server)"
+echo "EMQX: $(docker ps --filter name=nexushive_emqx --format '{{.Status}}')"
 
 # 保存配置信息
 cat > /root/nexushive-config.txt <<EOF
 NexusHive服务器配置信息
 ======================
 服务器IP: ${NEW_SERVER_IP}
-MySQL密码: ${MYSQL_ROOT_PASSWORD}
-数据库名: ${MYSQL_DB_NAME}
+
+数据库配置:
+- MySQL: 已安装(甲方提供)
+- 数据库名: ${MYSQL_DB_NAME}
+- Redis: 127.0.0.1:6379 (密码: nexushive_redis_2025)
 
 访问地址:
 - 前端: http://${NEW_SERVER_IP}
@@ -205,6 +179,8 @@ MySQL密码: ${MYSQL_ROOT_PASSWORD}
 - 后端代码: /www/nexushive/backend
 - 前端代码: /www/nexushive/frontend
 - 数据目录: /data/nexushive
+
+Web服务器: OpenResty (甲方已配置)
 
 生成时间: $(date)
 EOF
