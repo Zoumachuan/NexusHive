@@ -172,8 +172,9 @@ NexusHive服务器配置信息
 - EMQX管理: http://${NEW_SERVER_IP}:18083 (admin/public)
 
 目录结构:
-- 后端代码: /www/nexushive/backend
-- 前端代码: /www/nexushive/frontend
+- 项目代码: /root/NexusHive (从GitHub克隆)
+- 后端: /root/NexusHive/NexusHive
+- 前端: /root/NexusHive/Nexus-Hive-Web
 - 数据目录: /data/nexushive
 
 Web服务器: OpenResty (甲方已配置)

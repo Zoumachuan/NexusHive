@@ -81,13 +81,13 @@ PASSWORD = nexushive123
 EOF
 
 # 安装依赖
-cd /www/nexushive/backend
+cd /root/NexusHive/NexusHive
 composer install --no-dev --optimize-autoloader
 
 # 设置权限
-chown -R www-data:www-data /www/nexushive/backend
-chmod -R 755 /www/nexushive/backend
-chmod -R 777 /www/nexushive/backend/runtime
+chown -R www-data:www-data /root/NexusHive/NexusHive
+chmod -R 755 /root/NexusHive/NexusHive
+chmod -R 777 /root/NexusHive/NexusHive/runtime
 
 echo -e "${YELLOW}[4/6] 恢复数据库...${NC}"
 # 导入到甲方已安装的MySQL
@@ -131,7 +131,7 @@ server {
     listen 80;
     server_name ${SERVER_IP};
     
-    root /www/nexushive/frontend/dist;
+    root /root/NexusHive/Nexus-Hive-Web/dist;
     index index.html;
 
     # 前端静态文件
@@ -158,7 +158,7 @@ server {
 
     # 上传文件
     location /uploads {
-        alias /www/nexushive/backend/public/uploads;
+        alias /root/NexusHive/NexusHive/public/uploads;
     }
 }
 EOF
