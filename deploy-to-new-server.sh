@@ -68,18 +68,14 @@ echo -e "${YELLOW}[5/10] 创建项目目录...${NC}"
 mkdir -p /data/nexushive/{mysql,redis,emqx,logs,nginx,uploads}
 mkdir -p /www/nexushive/{backend,frontend}
 
-echo -e "${YELLOW}[6/10] 安装Redis 6.2...${NC}"
-if ! command -v redis-server &> /dev/null; then
-    apt-get install -y -qq redis-server
-    # 配置Redis
-    sed -i 's/^bind 127.0.0.1 ::1/bind 0.0.0.0/' /etc/redis/redis.conf
-    sed -i 's/^# requirepass foobared/requirepass nexushive_redis_2025/' /etc/redis/redis.conf
-    systemctl restart redis-server
-    systemctl enable redis-server
-    echo -e "${GREEN}✓ Redis安装完成${NC}"
-else
-    echo -e "${GREEN}✓ Redis已安装,跳过${NC}"
-fi
+echo -e "${YELLOW}[6/10] 确认Redis配置...${NC}"
+echo -e "${YELLOW}Redis已由甲方安装，请确认以下配置：${NC}"
+echo "1. Redis端口: 6379"
+echo "2. Redis密码: nexushive_redis_2025 (或留空)"
+echo "3. 允许远程连接(bind 0.0.0.0)或本地连接(bind 127.0.0.1)"
+echo ""
+read -p "按回车继续..."
+echo -e "${GREEN}✓ Redis配置确认完成${NC}"
 
 echo -e "${YELLOW}[7/10] 创建Docker Compose配置(仅EMQX)...${NC}"
 cat > /data/nexushive/docker-compose.yml <<EOF
@@ -157,7 +153,7 @@ echo "3. 将生成的 nexushive-backup.tar.gz 上传到新服务器"
 echo "4. 在新服务器执行: bash import-project.sh"
 echo ""
 echo -e "${YELLOW}服务状态:${NC}"
-echo "Redis: $(systemctl is-active redis-server)"
+echo "Redis: (甲方已安装)"
 echo "EMQX: $(docker ps --filter name=nexushive_emqx --format '{{.Status}}')"
 
 # 保存配置信息
@@ -169,7 +165,7 @@ NexusHive服务器配置信息
 数据库配置:
 - MySQL: 已安装(甲方提供)
 - 数据库名: ${MYSQL_DB_NAME}
-- Redis: 127.0.0.1:6379 (密码: nexushive_redis_2025)
+- Redis: 127.0.0.1:6379 (甲方已安装，请确认密码: nexushive_redis_2025)
 
 访问地址:
 - 前端: http://${NEW_SERVER_IP}

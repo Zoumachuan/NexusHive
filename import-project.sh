@@ -31,9 +31,14 @@ read -s MYSQL_PASSWORD
 echo ""
 
 if [ -z "$MYSQL_PASSWORD" ]; then
-    echo -e "${RED}错误: 密码不能为空${NC}"
+    echo -e "${RED}错误: MySQL密码不能为空${NC}"
     exit 1
 fi
+
+# 获取Redis密码
+echo -e "${YELLOW}请输入Redis密码(甲方已安装,如无密码直接回车):${NC}"
+read -s REDIS_PASSWORD
+echo ""
 
 echo -e "${YELLOW}[1/6] 解压备份文件...${NC}"
 cd /root
@@ -65,7 +70,7 @@ DEBUG = false
 [REDIS]
 HOST = 127.0.0.1
 PORT = 6379
-PASSWORD = nexushive_redis_2025
+PASSWORD = ${REDIS_PASSWORD}
 SELECT = 0
 
 [MQTT]
@@ -212,8 +217,8 @@ echo "后端API: http://${SERVER_IP}:8000"
 echo "EMQX管理: http://${SERVER_IP}:18083 (admin/public)"
 echo ""
 echo -e "${GREEN}服务状态:${NC}"
-echo "MySQL: $(systemctl is-active mysql || echo '未检测到systemctl管理')"
-echo "Redis: $(systemctl is-active redis-server)"
+echo "MySQL: (甲方已安装)"
+echo "Redis: (甲方已安装)"
 echo "EMQX: $(docker ps --filter name=nexushive_emqx --format '{{.Status}}')"
 echo "后端: $(systemctl is-active nexushive-backend)"
 echo ""
