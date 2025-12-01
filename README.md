@@ -1,152 +1,238 @@
-# Nexus Hive for Web低空智能飞行调度平台
+# NexusHive - 无人机云端管理平台
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![BuildAdmin](https://img.shields.io/badge/Backend-BuildAdmin-brightgreen.svg)](https://buildadmin.com/)
-[![Mars3D](https://img.shields.io/badge/Visualization-Mars3D-orange.svg)](https://mars3d.cn/)
-[![DJI SDK](https://img.shields.io/badge/DJI-Cloud%20API-v2--v3-success.svg)](https://developer.dji.com/)
+## 项目简介
 
-![输入图片说明](image.png)
-![输入图片说明](tx.png)
-![输入图片说明](jg.png)
-![输入图片说明](kj.png)
-## 概述
+NexusHive是一个支持多品牌无人机的云端管理平台,提供实时监控、航线规划、数据分析等功能。
 
-一款基于 **大疆上云API (DJI Cloud API)** 开发的工业级低空无人机智能调度与管理平台。后端采用 **BuildAdmin** 框架，提供稳定高效的API服务；前端三维可视化基于 **Mars3D** 引擎，呈现炫酷真实的作业场景。实现了对无人机机队的集中化、自动化、可视化管控，赋能能源巡检、工程测绘、安防监控等低空作业场景。
+### 支持设备
+- ✅ DJI大疆无人机(Dock 2/3 + M3D/M4D)
+- ✅ ACFLY开源无人机(基于MAVLink协议)
+- 🔄 更多品牌适配中...
+
+### 核心功能
+- 🗺️ 实时地图监控(2D百度地图 + 3D Mars3D)
+- 📡 MQTT物联网协议数据传输
+- 🎯 航线任务管理
+- 📊 飞行数据分析
+- 🔐 多用户权限管理
+- 📱 响应式Web界面
 
 ## 技术栈
 
-- **后端框架**: BuildAdmin (基于ThinkPHP和Vue的CRUD快速开发框架)
-- **三维引擎**: Mars3D (强大的三维地球平台)
-- **云服务**: 大疆上云API (DJI Cloud API)
-- **主要功能**: 项目分区管理、设备监控、远程控制、可视化航线编辑、任务调度、数据导出
+### 后端
+- ThinkPHP 8.1.1
+- PHP 8.1+
+- MySQL 5.7+
+- Redis 6.0+
+- EMQX MQTT Broker
 
-## 核心功能
+### 前端
+- Vue 3.5.13
+- Vite 6.3.5
+- TypeScript 5.7.2
+- Pinia 2.3.0
+- Mars3D 3.10.0
+- 百度地图API
 
-### 🗂 多维管理
-- **项目管理**：按项目维度集中管理所有无人机资源与任务。
-- **分区管理**：灵活划分和管理作业区域，实现精细化调度。
-- **设备管理**：全面接入并管理大疆机场(Dock)及飞行器，实时查看设备状态、告警信息、机场及飞行器详请数据。
+## 快速开始
 
-### 🛩 远程调度与控制
-- **多机型支持**：目前已支持大疆机场2 (Dock 2)、大疆机场3 (Dock 3) 的接入与管理，后续将扩展更多机型。
-- **远程运维**：可对远程机场进行重启、升级、参数配置等运维操作。
-- **一键指令**：支持任务一键下发、一键返航、紧急中止等快捷操作。
+### 环境要求
+- PHP >= 8.1
+- MySQL >= 5.7
+- Redis >= 6.0
+- Node.js >= 20.0
+- Composer
+- pnpm
 
-### ✈️ Mars3D可视化任务编辑
-- **三维飞行空间**：基于Mars3D引擎提供强大的三维可视化航线编辑器，在地球上直接绘制、拖拽修改航线。
-- **丰富动作指令**：航线支持添加多种动作，包括：
-    - 拍照、录像
-    - 悬停等待
-    - 飞行器偏航角调整
-    - 云台俯仰角控制
-    - 相机变焦 (Zoom In/Out)
-- **三维实时监控**：在三维场景中实时监控任务执行全过程，动态更新飞机位置、姿态与状态。
+### 一键部署(推荐)
 
-### 📊 数据与报告
-- **飞行记录导出**：一键导出完整的飞行任务记录与报告，便于后续分析与审计。
-- **设备告警历史**：查看所有设备的历史告警信息，助力设备健康管理。
-## 关于部署
-- **环境准备清单**： 
+```bash
+# 新服务器初始化
+wget https://raw.githubusercontent.com/你的用户名/NexusHive/main/deploy-to-new-server.sh
+chmod +x deploy-to-new-server.sh
+sudo bash deploy-to-new-server.sh
+```
 
- ***后端***： 
+### 手动部署
 
-        PHP > 8.0
-        Mysql  5.7
-        Redis  6.2
-        Workerman 3.5.34
-        EMQX 4.4
- ***前端***： 
-        Node
-            node.js > 20.19.0
-            node.js: 22.x (推荐)
-        核心框架
-            Vue: 3.5.13 (Vue 3 组合式API)
-            TypeScript: 5.7.2
-            Vite: 6.3.5 (构建工具)
-            Vue Router: 4.5.0 (路由管理)
-            Pinia: 2.3.0 (状态管理)
-        UI组件库
-            Element Plus: 2.9.1 (主要UI组件库)
-            Element Plus Icons: 2.3.1 (图标库)
-            Font Awesome: 4.7.0 (图标字体)
-        地图与3D渲染
-            Mars3D: 3.10.0 (三维地球平台)
-            Mars3D Cesium: 1.131.1 (Cesium引擎)
-            Mars3D Space: 3.10.0 (空间分析)
-            @turf/turf: 7.2.0 (地理空间分析)
-        通信与实时功能
-            MQTT: 5.13.3 (消息队列)
-            Agora RTC SDK: 4.23.4 (实时音视频)
-            Axios: 1.9.0 (HTTP客户端)
- ***宝塔部署***： 
-        
-        宝塔新建站点，设置站点目录为public
+详细步骤请参考 [MANUAL-DEPLOY.md](./MANUAL-DEPLOY.md)
 
-        伪静态：
-        location ~* (runtime|application)/{
-        	return 403;
-        }
-        location / {
-        	if (!-e $request_filename){
-        		rewrite  ^(.*)$  /index.php?s=$1  last;   break;
-        	}
-        }
+## 项目迁移
 
-        需要守护进程在根目录启动 Workerman：
+### 从旧服务器导出
+```bash
+cd /path/to/NexusHive
+bash export-project.sh
+```
 
-        php think worker:server 
+### 导入到新服务器
+```bash
+scp nexushive-backup-*.tar.gz root@新服务器:/root/
+ssh root@新服务器
+bash import-project.sh
+```
 
- ***注意事项***： 
+## 配置说明
 
-        部署前请先保证emqx访问正常，并将机场部署至对应的第三方云，同时mqttx能够订阅thing/product/{机场SN}/osd并收到消息推送
-        目前媒体支持只支持OSS，请开通bu# Nexus Hive for Web低空智能飞行调度平台
-        目前直播用的声网Agora的极速直播，请在前端配置文件中配置声网token授权的访问域名，如果需要rtmp，可以查看前端部分代码，改动直播类型即可
+### 后端配置 (.env)
+```ini
+[DATABASE]
+HOSTNAME = 127.0.0.1
+DATABASE = nexushive
+USERNAME = root
+PASSWORD = your_password
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![BuildAdmin](https://img.shields.io/badge/Backend-BuildAdmin-brightgreen.svg)](https://buildadmin.com/)
-[![Mars3D](https://img.shields.io/badge/Visualization-Mars3D-orange.svg)](https://mars3d.cn/)
-[![DJI SDK](https://img.shields.io/badge/DJI-Cloud%20API-v2--v3-success.svg)](https://developer.dji.com/)
-        
-## 开源协议
+[REDIS]
+HOST = 127.0.0.1
+PORT = 6379
 
-本项目采用 Apache License 2.0 开源协议，详情请参阅 [LICENSE](LICENSE) 文件。
+[MQTT]
+HOST = 127.0.0.1
+PORT = 1883
+USERNAME = nexushive
+PASSWORD = your_mqtt_password
+```
 
-## 交流与贡献
+### 前端配置 (.env.production)
+```bash
+VITE_AXIOS_BASE_URL='http://your-server-ip:8000'
+VITE_MQTT_HOST='your-server-ip'
+VITE_MQTT_PORT=1883
+VITE_MQTT_WS_PORT=8083
+```
 
-欢迎提交 Issue 和 Pull Request！
+## 访问地址
 
--   **社区交流群**：请加群获取前端代码、数据库文件及详细开发文档。
-    ![NexusHive交流群](NexusHive%E4%BA%A4%E6%B5%81%E7%BE%A4.png)
+- 前端管理界面: `http://your-server-ip`
+- 后端API: `http://your-server-ip:8000`
+- EMQX管理后台: `http://your-server-ip:18083` (admin/public)
 
--   **邮箱联系**：261003520@qq.com
-### 特别鸣谢
-- [Thinkphp](http://www.thinkphp.cn/)
-- [FastAdmin](https://gitee.com/karson/fastadmin)
-- [Vue](https://github.com/vuejs/core)
-- [vue-next-admin](https://gitee.com/lyt-top/vue-next-admin)
-- [Element Plus](https://github.com/element-plus/element-plus)
-- [TypeScript](https://github.com/microsoft/TypeScript)
-- [vue-router](https://github.com/vuejs/vue-router-next)
-- [vite](https://github.com/vitejs/vite)
-- [Pinia](https://github.com/vuejs/pinia)
-- [Axios](https://github.com/axios/axios)
-- [nprogress](https://github.com/rstacruz/nprogress)
-- [screenfull](https://github.com/sindresorhus/screenfull.js)
-- [mitt](https://github.com/developit/mitt)
-- [sass](https://github.com/sass/sass)
-- [echarts](https://github.com/apache/echarts)
-- [vueuse](https://github.com/vueuse/vueuse)
-- [lodash](https://github.com/lodash/lodash)
-- [eslint](https://github.com/eslint/eslint)
-- [prettier](https://github.com/prettier/prettier)
-- [Sortable](https://github.com/SortableJS/Sortable)
-- [v-code-diff](https://github.com/Shimada666/v-code-diff)
-- [clicaptcha](https://github.com/hooray/clicaptcha)
-- [phinx](https://github.com/cakephp/phinx)
-- [buildAdmin](https://www.buildadmin.com/)
-- [mars3d](http://mars3d.cn/)
-- [DJI SDK](https://developer.dji.com/)
-- [jetbrains](https://www.jetbrains.com/)
-## 免责声明
+## 项目结构
 
-本项目是基于大疆云API进行的二次开发，使用时请遵守大疆的开发者协议及相关法律法规。开发者不对因使用本项目而产生的任何直接或间接损失负责。
+```
+NexusHive/
+├── NexusHive/                 # 后端代码(ThinkPHP)
+│   ├── app/                   # 应用目录
+│   │   ├── admin/            # 管理后台模块
+│   │   ├── api/              # API接口模块
+│   │   └── common/           # 公共模块
+│   ├── config/               # 配置文件
+│   ├── extend/               # 扩展类库
+│   │   ├── dji/             # DJI设备适配
+│   │   ├── mqtt/            # MQTT处理
+│   │   └── acfly/           # ACFLY设备适配(开发中)
+│   ├── public/              # 静态资源
+│   └── runtime/             # 运行时文件
+│
+├── Nexus-Hive-Web/          # 前端代码(Vue3)
+│   ├── src/
+│   │   ├── api/            # API封装
+│   │   ├── components/     # 公共组件
+│   │   ├── views/          # 页面视图
+│   │   ├── stores/         # Pinia状态管理
+│   │   └── router/         # 路由配置
+│   └── public/
+│       ├── config/         # 地图配置
+│       └── model/          # 3D模型
+│
+├── deploy-to-new-server.sh  # 一键部署脚本
+├── export-project.sh        # 项目导出脚本
+└── import-project.sh        # 项目导入脚本
+```
+
+## ACFLY开源无人机适配
+
+### 协议支持
+- ✅ MAVLink 1.0/2.0
+- ✅ JSON状态上报
+- ✅ MQTT数据传输
+- 🔄 远程控制指令(开发中)
+
+### 现场部署
+
+在地面站电脑运行Python桥接脚本:
+```bash
+pip3 install paho-mqtt
+python3 acfly_mqtt_bridge.py
+```
+
+详细协议说明: [ACFLY地面站与飞控交互协议.md](./ACFLY地面站与飞控交互协议.md)
+
+## 开发指南
+
+### 后端开发
+```bash
+cd NexusHive
+composer install
+php think run
+```
+
+### 前端开发
+```bash
+cd Nexus-Hive-Web
+pnpm install
+pnpm dev
+```
+
+## 数据库迁移
+
+```bash
+# 导出
+php think migrate:run
+
+# 导入
+mysql -u root -p nexushive < database.sql
+```
+
+## Docker部署
+
+```bash
+cd /data/nexushive
+docker-compose up -d
+
+# 查看容器状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+```
+
+## 常见问题
+
+### 1. MQTT连接失败
+检查EMQX服务状态:
+```bash
+docker logs nexushive_emqx
+```
+访问管理界面配置用户: http://ip:18083
+
+### 2. 前端访问404
+检查Nginx配置和文件权限:
+```bash
+docker logs nexushive_nginx
+ls -la /www/nexushive/frontend/dist
+```
+
+### 3. 数据库连接失败
+检查MySQL容器和配置:
+```bash
+docker exec nexushive_mysql mysql -uroot -p -e "SHOW DATABASES;"
+```
+
+更多问题请查看: [MANUAL-DEPLOY.md](./MANUAL-DEPLOY.md)
+
+## 许可证
+
+MIT License
+
+## 作者
+
+- 项目维护: [你的GitHub用户名]
+- 技术支持: [联系方式]
+
+## 致谢
+
+- [BuildAdmin](https://buildadmin.com/) - 后端框架基础
+- [Mars3D](http://mars3d.cn/) - 三维地图引擎
+- [EMQX](https://www.emqx.io/) - MQTT服务器
+- [ACFLY](https://www.acfly.cn/) - 开源飞控协议支持

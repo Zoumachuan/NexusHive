@@ -1,47 +1,24 @@
-# 通过 Git 部署项目至线上时建议删除的忽略规则
-/vendor
-/modules
-/public/*.lock
-/public/index.html
-/public/assets
+# 后端
+/NexusHive/runtime/
+/NexusHive/vendor/
+/NexusHive/.env
+/NexusHive/public/uploads/
 
-# 通过 Git 部署项目至线上时可以考虑删除的忽略规则
-/public/storage/*
-composer.lock
-pnpm-lock.yaml
-package-lock.json
-yarn.lock
+# 前端
+/Nexus-Hive-Web/node_modules/
+/Nexus-Hive-Web/dist/
+/Nexus-Hive-Web/.env.local
+/Nexus-Hive-Web/.env.production.local
 
-# common
-/nbproject
-/runtime/*
-/install
-node_modules
-dist
-dist-ssr
+# 系统文件
 .DS_Store
-/.env
-Desktop.ini
-
-# Log files
+.idea/
+.vscode/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.swp
+*.swo
 
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-!/web/.vscode
-
-# Other
-*.css.map
-*.local
-!.gitkeep
-.svn
+# 备份文件
+*.tar.gz
+*.sql
+nexushive-backup*/
